@@ -1,6 +1,6 @@
 namespace CoinLore;
 
-using CoinLore.Middleware;
+using Middleware;
 using Serilog;
 
 public class Program
@@ -9,10 +9,11 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
+        ServiceExtensions.ConfigureServices(builder.Services, builder.Configuration);
+        ServiceExtensions.RegisterServices(builder.Services, builder.Configuration);
 
         builder.Services.AddControllers();
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
@@ -21,7 +22,6 @@ public class Program
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseSerilogRequestLogging();
 
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -31,7 +31,6 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAuthorization();
-
 
         app.MapControllers();
 
