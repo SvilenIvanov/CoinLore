@@ -20,7 +20,6 @@
     <Folder Include="Helpers\" />
     <Folder Include="Logs\" />
     <Folder Include="Validators\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
