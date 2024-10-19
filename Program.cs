@@ -1,5 +1,7 @@
-
 namespace CoinLore;
+
+using CoinLore.Middleware;
+using Serilog;
 
 public class Program
 {
@@ -15,6 +17,9 @@ public class Program
         builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
+
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseSerilogRequestLogging();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

@@ -1,16 +1,22 @@
 ﻿namespace CoinLore.Middleware;
 
 using Exceptions;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Text.Json;
 
 public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+    private readonly IHostEnvironment _env;
 
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger, IHostEnvironment env)
     {
         _next = next;
         _logger = logger;
+        _env = env;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -21,23 +27,64 @@ public class ExceptionHandlingMiddleware
         }
         catch (HttpStatusCodeException ex)
         {
-            _logger.LogError($"Error: {ex.Message}, Status Code: {ex.StatusCode}");
-            context.Response.StatusCode = ex.StatusCode;
-            await context.Response.WriteAsJsonAsync(new
+            _logger.LogError(ex, "An HTTP status code exception occurred.");
+            context.Response.StatusCode = (int)ex.StatusCode;
+            context.Response.ContentType = "application/problem+json";
+
+            var problemDetails = new ProblemDetails
             {
-                StatusCode = ex.StatusCode,
-                Error = ex.Message
-            });
+                Status = (int)ex.StatusCode,
+                Title = ex.Message,
+                Instance = context.Request.Path
+            };
+
+            if (_env.IsDevelopment())
+            {
+                problemDetails.Detail = ex.StackTrace;
+            }
+
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, options));
+        }
+        catch (ValidationException vex)
+        {
+            _logger.LogWarning(vex, "Validation failed.");
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/problem+json";
+
+            var problemDetails = new ValidationProblemDetails(vex.Errors.ToDictionary(
+                e => e.PropertyName,
+                e => new[] { e.ErrorMessage }
+            ))
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "One or more validation errors occurred.",
+                Instance = context.Request.Path
+            };
+
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, options));
         }
         catch (Exception ex)
         {
-            _logger.LogError($"An unexpected error occurred: {ex.Message}");
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new
+            _logger.LogError(ex, "An unexpected error occurred.");
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            context.Response.ContentType = "application/problem+json";
+
+            var problemDetails = new ProblemDetails
             {
-                StatusCode = StatusCodes.Status500InternalServerError,
-                Error = "An internal server error occurred."
-            });
+                Status = (int)HttpStatusCode.InternalServerError,
+                Title = "An unexpected error occurred.",
+                Instance = context.Request.Path
+            };
+
+            if (_env.IsDevelopment())
+            {
+                problemDetails.Detail = ex.StackTrace;
+            }
+
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, options));
         }
     }
 }
