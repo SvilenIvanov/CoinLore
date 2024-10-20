@@ -10,20 +10,25 @@ using System.Threading.Tasks;
 public class PortfolioService : IPortfolioService
 {
     private readonly IPortfolioRepository _portfolioRepository;
+    private readonly ISymbolToIdMappingService _mappingService;
     private readonly ILogger<PortfolioService> _logger;
 
     public PortfolioService(
         IPortfolioRepository portfolioRepository,
-        ILogger<PortfolioService> logger)
+        ILogger<PortfolioService> logger,
+        ISymbolToIdMappingService mappingService)
     {
         _portfolioRepository = portfolioRepository;
         _logger = logger;
+        _mappingService = mappingService;
     }
 
     public async Task UploadPortfolioAsync(IFormFile file)
     {
         if (file == null || file.Length == 0)
             throw new HttpStatusCodeException(400, "Invalid file.");
+
+        var symbolToIdMap = await _mappingService.GetSymbolToIdMapAsync();
 
         var items = new List<PortfolioItem>();
 
@@ -59,9 +64,15 @@ public class PortfolioService : IPortfolioService
                 continue;
             }
 
+            if (!symbolToIdMap.TryGetValue(coin, out var id))
+            {
+                _logger.LogWarning("Coin symbol {Coin} not found in mapping at line {LineNumber}. Skipping.", coin, lineNumber);
+                continue;
+            }
+
             items.Add(new PortfolioItem
             {
-                Id = 1,
+                Id = id,
                 Quantity = quantity,
                 Coin = coin,
                 InitialPrice = initialPrice

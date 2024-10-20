@@ -15,8 +15,7 @@ public class SymbolToIdMappingService : ISymbolToIdMappingService
         IOptions<MappingConfig> mappingConfigOptions,
         ILogger<SymbolToIdMappingService> logger)
     {
-        var mappingConfig = mappingConfigOptions.Value;
-        _symbolToIdMapFilePath = mappingConfig.SymbolToIdMapFilePath;
+        _symbolToIdMapFilePath = mappingConfigOptions.Value.SymbolToIdMapFilePath;
         _logger = logger;
 
         _lazyMap = new Lazy<Task<Dictionary<string, long>>>(LoadMappingAsync, true);
