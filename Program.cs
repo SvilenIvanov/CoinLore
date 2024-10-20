@@ -9,13 +9,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Logging.ClearProviders();
+
         builder.Host.UseSerilog(
             (context, services, configuration) => configuration
                 .ReadFrom.Configuration(context.Configuration)
                 .ReadFrom.Services(services)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(),
-            true
         );
 
         ServiceExtensions.ConfigureServices(builder.Services, builder.Configuration);
