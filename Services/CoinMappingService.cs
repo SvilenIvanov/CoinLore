@@ -10,9 +10,8 @@ public class CoinMappingService : ICoinMappingService
     private readonly ILogger<CoinMappingService> _logger;
 
     private const int Limit = 100;
-    public CoinMappingService(
-        ICoinLoreClient coinLoreClient,
-        ILogger<CoinMappingService> logger)
+
+    public CoinMappingService(ICoinLoreClient coinLoreClient, ILogger<CoinMappingService> logger)
     {
         _coinLoreClient = coinLoreClient;
         _logger = logger;
@@ -40,14 +39,14 @@ public class CoinMappingService : ICoinMappingService
         var symbolToIdMap = results
             .Where(coins => coins != null)
             .SelectMany(coins => coins)
-            .GroupBy(coin => coin.Symbol.ToUpper())
-            .ToDictionary(g => g.Key, g => g.First().Id);
+            .ToDictionary(coin => coin.Symbol.ToUpperInvariant(), coin => coin.Id);
 
         var json = System.Text.Json.JsonSerializer.Serialize(symbolToIdMap, new System.Text.Json.JsonSerializerOptions
         {
             WriteIndented = true
         });
-        await File.WriteAllTextAsync("symbolToIdMap.json", json);
+
+        await File.WriteAllTextAsync("Mapping/symbolToIdMap.json", json);
 
         _logger.LogInformation("Symbol to ID mapping saved successfully.");
     }

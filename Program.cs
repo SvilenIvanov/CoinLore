@@ -9,18 +9,27 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Host.UseSerilog(
+            (context, services, configuration) => configuration
+                .ReadFrom.Configuration(context.Configuration)
+                .ReadFrom.Services(services)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(),
+            true
+        );
+
         ServiceExtensions.ConfigureServices(builder.Services, builder.Configuration);
         ServiceExtensions.RegisterServices(builder.Services, builder.Configuration);
 
         builder.Services.AddControllers();
 
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        ServiceExtensions.AddSwaggerDocumentation(builder.Services);
 
         var app = builder.Build();
 
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseSerilogRequestLogging();
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         if (app.Environment.IsDevelopment())
         {

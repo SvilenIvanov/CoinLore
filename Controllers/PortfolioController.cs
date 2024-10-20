@@ -3,7 +3,6 @@
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-
 [ApiController]
 [Route("api/[controller]")]
 public class PortfolioController : ControllerBase
@@ -15,8 +14,15 @@ public class PortfolioController : ControllerBase
         _portfolioService = portfolioService;
     }
 
+    /// <summary>
+    /// Uploads a portfolio file.
+    /// </summary>
+    /// <param name="file">The portfolio file to upload.</param>
+    /// <returns>A confirmation message.</returns>
     [HttpPost("upload")]
-    public async Task<IActionResult> UploadPortfolio([FromForm] IFormFile file)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadPortfolio(IFormFile file)
     {
         await _portfolioService.UploadPortfolioAsync(file);
         return Ok(new { Message = "Portfolio uploaded successfully." });
