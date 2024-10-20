@@ -1,7 +1,7 @@
 ﻿namespace CoinLore.Controllers;
 
+using CoinLore.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Services;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -14,6 +14,12 @@ public class CoinMappingController : ControllerBase
         _coinMappingService = coinMappingService;
     }
 
+    /// <summary>
+    /// Creates a mapping between cryptocurrency coin and id from the coinlore api.
+    /// Saves it in the Mapping directory.
+    /// The mapping is used for the Portfolio endpoints
+    /// </summary>
+    /// <returns></returns>
     [HttpPost("update")]
     public async Task<IActionResult> UpdateCoinMapping()
     {

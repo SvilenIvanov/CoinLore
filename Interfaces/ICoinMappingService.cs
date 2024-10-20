@@ -1,5 +1,4 @@
-﻿
-namespace CoinLore.Services;
+﻿namespace CoinLore.Interfaces;
 
 public interface ICoinMappingService
 {

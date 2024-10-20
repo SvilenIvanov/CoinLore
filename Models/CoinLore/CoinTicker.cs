@@ -11,5 +11,5 @@ public class CoinTicker
     public string Symbol { get; set; }
 
     [JsonPropertyName("price_usd")]
-    public decimal PriceUsd { get; set; }
+    public string PriceUsd { get; set; }
 }

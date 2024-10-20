@@ -1,8 +1,8 @@
 ﻿namespace CoinLore;
 
 using Clients;
+using CoinLore.Interfaces;
 using Configurations;
-using Interfaces;
 using Services;
 using System.Reflection;
 

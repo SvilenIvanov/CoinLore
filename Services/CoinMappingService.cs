@@ -1,7 +1,7 @@
 ﻿namespace CoinLore.Services;
 
+using CoinLore.Interfaces;
 using Exceptions;
-using Interfaces;
 using Models.CoinLore;
 
 public class CoinMappingService : ICoinMappingService
@@ -39,7 +39,8 @@ public class CoinMappingService : ICoinMappingService
         var symbolToIdMap = results
             .Where(coins => coins != null)
             .SelectMany(coins => coins)
-            .ToDictionary(coin => coin.Symbol.ToUpperInvariant(), coin => coin.Id);
+            .GroupBy(coin => coin.Symbol.ToUpper())
+            .ToDictionary(g => g.Key, g => long.Parse(g.First().Id));
 
         var json = System.Text.Json.JsonSerializer.Serialize(symbolToIdMap, new System.Text.Json.JsonSerializerOptions
         {

@@ -57,55 +57,55 @@ public class CoinPriceService : ICoinPriceService
     {
         var symbolSet = new HashSet<string>(symbols.Select(s => s.ToUpper()));
         var prices = new Dictionary<string, decimal>();
-        var symbolToId = new Dictionary<string, string>();
+        //var symbolToId = new Dictionary<string, string>();
 
-        var topTickers = await _coinLoreClient.GetTopTickersAsync();
-        var topTickersDict = topTickers.ToDictionary(t => t.Symbol.ToUpper(), t => t);
+        //var topTickers = await _coinLoreClient.GetTopTickersAsync();
+        //var topTickersDict = topTickers.ToDictionary(t => t.Symbol.ToUpper(), t => t);
 
-        foreach (var symbol in symbolSet)
-        {
-            if (topTickersDict.TryGetValue(symbol, out var ticker))
-            {
-                prices[symbol] = ticker.PriceUsd;
-                symbolToId[symbol] = ticker.Id;
-            }
-        }
+        //foreach (var symbol in symbolSet)
+        //{
+        //    if (topTickersDict.TryGetValue(symbol, out var ticker))
+        //    {
+        //        prices[symbol] = ticker.PriceUsd;
+        //        symbolToId[symbol] = ticker.Id;
+        //    }
+        //}
 
-        var symbolsNotFound = symbolSet.Except(prices.Keys);
+        //var symbolsNotFound = symbolSet.Except(prices.Keys);
 
-        if (symbolsNotFound.Any())
-        {
-            foreach (var symbol in symbolsNotFound)
-            {
-                if (_cache.TryGetValue($"Id_{symbol}", out string id))
-                {
-                    symbolToId[symbol] = id;
-                }
-                else
-                {
-                    await UpdateSymbolToIdCacheAsync(symbol);
-                    if (_cache.TryGetValue($"Id_{symbol}", out id))
-                    {
-                        symbolToId[symbol] = id;
-                    }
-                }
-            }
+        //if (symbolsNotFound.Any())
+        //{
+        //    foreach (var symbol in symbolsNotFound)
+        //    {
+        //        if (_cache.TryGetValue($"Id_{symbol}", out string id))
+        //        {
+        //            symbolToId[symbol] = id;
+        //        }
+        //        else
+        //        {
+        //            await UpdateSymbolToIdCacheAsync(symbol);
+        //            if (_cache.TryGetValue($"Id_{symbol}", out id))
+        //            {
+        //                symbolToId[symbol] = id;
+        //            }
+        //        }
+        //    }
 
-            var idsToFetch = symbolToId.Values.Distinct();
+        //    var idsToFetch = symbolToId.Values.Distinct();
 
-            if (idsToFetch.Any())
-            {
-                var missingTickers = await _coinLoreClient.GetTickersByIdsAsync(idsToFetch);
+        //    if (idsToFetch.Any())
+        //    {
+        //        var missingTickers = await _coinLoreClient.GetTickersByIdsAsync(idsToFetch);
 
-                foreach (var ticker in missingTickers)
-                {
-                    var symbol = ticker.Symbol.ToUpper();
-                    prices[symbol] = ticker.PriceUsd;
+        //        foreach (var ticker in missingTickers)
+        //        {
+        //            var symbol = ticker.Symbol.ToUpper();
+        //            prices[symbol] = ticker.PriceUsd;
 
-                    _cache.Set($"Price_{symbol}", ticker.PriceUsd, TimeSpan.FromMinutes(5));
-                }
-            }
-        }
+        //            _cache.Set($"Price_{symbol}", ticker.PriceUsd, TimeSpan.FromMinutes(5));
+        //        }
+        //    }
+        //}
 
         return prices;
     }
