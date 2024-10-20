@@ -16,9 +16,12 @@ public static class ServiceExtensions
 
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddMemoryCache();
         services.AddScoped<ICoinPriceService, CoinPriceService>();
         services.AddScoped<ICoinMappingService, CoinMappingService>();
+        services.AddScoped<IPortfolioService, PortfolioService>();
+
+        services.AddSingleton<IPortfolioRepository, InMemoryPortfolioRepository>();
+        services.AddSingleton<ISymbolToIdMappingService, SymbolToIdMappingService>();
 
         services.AddHttpClient<ICoinLoreClient, CoinLoreClient>(client =>
         {

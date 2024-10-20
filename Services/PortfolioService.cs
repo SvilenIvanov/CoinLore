@@ -22,47 +22,50 @@ public class PortfolioService : IPortfolioService
 
     public async Task UploadPortfolioAsync(IFormFile file)
     {
+        if (file == null || file.Length == 0)
+            throw new HttpStatusCodeException(400, "Invalid file.");
+
         var items = new List<PortfolioItem>();
 
-        using (var stream = file.OpenReadStream())
-        using (var reader = new StreamReader(stream))
+        using var stream = file.OpenReadStream();
+        using var reader = new StreamReader(stream);
+
+        string line;
+        var lineNumber = 0;
+        while ((line = await reader.ReadLineAsync()) != null)
         {
-            string line;
-            var lineNumber = 0;
-            while ((line = await reader.ReadLineAsync()) != null)
+            lineNumber++;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            var parts = line.Split('|');
+            if (parts.Length != 3)
             {
-                lineNumber++;
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                var parts = line.Split('|');
-                if (parts.Length != 3)
-                {
-                    _logger.LogWarning("Invalid line format at line {LineNumber}: {Line}", lineNumber, line);
-                    continue;
-                }
-
-                if (!decimal.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var quantity))
-                {
-                    _logger.LogWarning("Invalid quantity at line {LineNumber}: {Value}", lineNumber, parts[0]);
-                    continue;
-                }
-
-                var coin = parts[1].Trim().ToUpperInvariant();
-
-                if (!decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var initialPrice))
-                {
-                    _logger.LogWarning("Invalid initial price at line {LineNumber}: {Value}", lineNumber, parts[2]);
-                    continue;
-                }
-
-                items.Add(new PortfolioItem
-                {
-                    Quantity = quantity,
-                    Coin = coin,
-                    InitialPrice = initialPrice
-                });
+                _logger.LogWarning($"Invalid line format at line {lineNumber}: {line}");
+                continue;
             }
+
+            if (!decimal.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var quantity))
+            {
+                _logger.LogWarning($"Invalid quantity at line {lineNumber}: {line}");
+                continue;
+            }
+
+            var coin = parts[1].Trim().ToUpperInvariant();
+
+            if (!decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var initialPrice))
+            {
+                _logger.LogWarning($"Invalid initial price at line {lineNumber}: {parts[2]}");
+                continue;
+            }
+
+            items.Add(new PortfolioItem
+            {
+                Id = 1,
+                Quantity = quantity,
+                Coin = coin,
+                InitialPrice = initialPrice
+            });
         }
 
         await _portfolioRepository.UploadPortfolioAsync(items);
@@ -77,8 +80,8 @@ public class PortfolioService : IPortfolioService
             throw new HttpStatusCodeException(400, "Portfolio is empty. Please upload a portfolio file.");
 
         var coinChanges = new List<CoinChange>();
-        decimal initialValue = 0;
-        decimal currentValue = 0;
+        var initialValue = 0m;
+        var currentValue = 0m;
 
         foreach (var item in items)
         {

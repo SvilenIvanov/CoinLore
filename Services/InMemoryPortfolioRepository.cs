@@ -1,6 +1,6 @@
 ﻿namespace CoinLore.Services;
 
-using CoinLore.Interfaces;
+using Interfaces;
 using Models;
 using System.Collections.Concurrent;
 
