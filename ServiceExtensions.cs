@@ -1,8 +1,8 @@
 ﻿namespace CoinLore;
 
 using Clients;
-using CoinLore.Interfaces;
 using Configurations;
+using Interfaces;
 using Services;
 using System.Reflection;
 
@@ -11,6 +11,7 @@ public static class ServiceExtensions
     public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<CoinLoreConfig>(configuration.GetSection(nameof(CoinLoreConfig)));
+        services.Configure<MappingConfig>(configuration.GetSection(nameof(MappingConfig)));
     }
 
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)

@@ -1,7 +1,9 @@
 ﻿namespace CoinLore.Services;
 
-using CoinLore.Interfaces;
+using Configurations;
 using Exceptions;
+using Interfaces;
+using Microsoft.Extensions.Options;
 using Models.CoinLore;
 
 public class CoinMappingService : ICoinMappingService
@@ -9,12 +11,15 @@ public class CoinMappingService : ICoinMappingService
     private readonly ICoinLoreClient _coinLoreClient;
     private readonly ILogger<CoinMappingService> _logger;
 
-    private const int Limit = 100;
+    private readonly string _symbolToIdMapFilePath;
+    private readonly int _limit;
 
-    public CoinMappingService(ICoinLoreClient coinLoreClient, ILogger<CoinMappingService> logger)
+    public CoinMappingService(ICoinLoreClient coinLoreClient, ILogger<CoinMappingService> logger, IOptions<MappingConfig> mappingConfigOptions)
     {
         _coinLoreClient = coinLoreClient;
         _logger = logger;
+        _symbolToIdMapFilePath = mappingConfigOptions.Value.SymbolToIdMapFilePath ?? "Mapping/symbolToIdMap.json";
+        _limit = mappingConfigOptions.Value.Limit;
     }
 
     public async Task UpdateCoinMappingAsync()
@@ -27,11 +32,11 @@ public class CoinMappingService : ICoinMappingService
         var coinsCount = globalData.CoinsCount;
         _logger.LogInformation($"Total coins count: {coinsCount}");
 
-        int numberOfCalls = (int)Math.Ceiling((double)coinsCount / Limit);
+        int numberOfCalls = (int)Math.Ceiling((double)coinsCount / _limit);
         _logger.LogInformation($"Number of API calls required: {numberOfCalls}");
 
         var tasks = Enumerable.Range(0, numberOfCalls)
-            .Select(i => FetchCoinsAsync(i * Limit, Limit))
+            .Select(i => FetchCoinsAsync(i * _limit, _limit))
             .ToList();
 
         var results = await Task.WhenAll(tasks);
@@ -47,7 +52,7 @@ public class CoinMappingService : ICoinMappingService
             WriteIndented = true
         });
 
-        await File.WriteAllTextAsync("Mapping/symbolToIdMap.json", json);
+        await File.WriteAllTextAsync(_symbolToIdMapFilePath, json);
 
         _logger.LogInformation("Symbol to ID mapping saved successfully.");
     }
