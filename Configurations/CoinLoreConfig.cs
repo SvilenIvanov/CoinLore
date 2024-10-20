@@ -14,4 +14,6 @@ public class CoinLoreEndpoints
     public string TickerById { get; set; }
 
     public string TickersByPagination { get; set; }
+
+    public string Global { get; set; }
 }

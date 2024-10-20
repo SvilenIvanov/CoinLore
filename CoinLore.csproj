@@ -19,6 +19,7 @@
   <ItemGroup>
     <Folder Include="Helpers\" />
     <Folder Include="Logs\" />
+    <Folder Include="Mapping\" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

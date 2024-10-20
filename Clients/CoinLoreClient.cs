@@ -18,6 +18,13 @@ public class CoinLoreClient : BaseHttpClient, ICoinLoreClient
         _config = optionsMonitor.CurrentValue;
     }
 
+    public async Task<GlobalData?> GetGlobalDataAsync()
+    {
+        var endpoint = _config.Endpoints.Global;
+        var response = await GetAsync<List<GlobalData>>(endpoint);
+        return response.Count > 0 ? response[0] : null;
+    }
+
     public async Task<List<CoinTicker>> GetTopTickersAsync()
     {
         var endpoint = _config.Endpoints.Tickers;
