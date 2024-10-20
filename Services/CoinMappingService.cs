@@ -18,7 +18,7 @@ public class CoinMappingService : ICoinMappingService
     {
         _coinLoreClient = coinLoreClient;
         _logger = logger;
-        _symbolToIdMapFilePath = mappingConfigOptions.Value.SymbolToIdMapFilePath ?? "Mapping/symbolToIdMap.json";
+        _symbolToIdMapFilePath = mappingConfigOptions.Value.SymbolToIdMapFilePath;
         _limit = mappingConfigOptions.Value.Limit;
     }
 

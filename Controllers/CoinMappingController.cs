@@ -1,6 +1,6 @@
 ﻿namespace CoinLore.Controllers;
 
-using CoinLore.Interfaces;
+using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
