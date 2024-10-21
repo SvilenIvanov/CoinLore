@@ -21,6 +21,12 @@
     <ProjectReference Include="..\CoinLore\CoinLore.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<None Include="TestData\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>

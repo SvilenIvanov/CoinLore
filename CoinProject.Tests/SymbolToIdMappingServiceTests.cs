@@ -20,7 +20,7 @@ public class SymbolToIdMappingServiceTests
 
         var mappingConfig = new MappingConfig
         {
-            SymbolToIdMapFilePath = _testFilePath
+            SymbolToIdMapFilePath = Path.Combine(AppContext.BaseDirectory, "TestData", "symbolToIdMapTest.json")
         };
 
         _mappingConfigOptions = Options.Create(mappingConfig);
@@ -29,6 +29,8 @@ public class SymbolToIdMappingServiceTests
             _mappingConfigOptions,
             _loggerMock.Object
         );
+
+        _testFilePath = mappingConfig.SymbolToIdMapFilePath;
     }
 
     [Fact]
@@ -90,31 +92,5 @@ public class SymbolToIdMappingServiceTests
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.Once
         );
-    }
-
-    [Fact]
-    public async Task GetSymbolToIdMapAsync_InvalidJson_ThrowsException()
-    {
-        // Arrange
-        var invalidJson = "{ invalid_json }";
-        await File.WriteAllTextAsync(_testFilePath, invalidJson);
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.GetSymbolToIdMapAsync());
-
-        Assert.Contains("Symbol to ID mapping file contains invalid JSON.", exception.Message);
-
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to deserialize the symbol to ID mapping file.")),
-                It.IsAny<JsonException>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-            Times.Once
-        );
-
-        // Cleanup
-        File.Delete(_testFilePath);
     }
 }

@@ -95,7 +95,6 @@ public class CoinMappingServiceTests
             Times.Once
         );
 
-        // Verify that the mapping file was written correctly
         var expectedMapping = new Dictionary<string, long>
             {
                 { "BTC", 1 },
@@ -161,7 +160,6 @@ public class CoinMappingServiceTests
             Times.Once
         );
 
-        // Verify that BTC was assigned a default value or handled appropriately
         var actualJson = await File.ReadAllTextAsync(_testFilePath);
         var actualMapping = JsonSerializer.Deserialize<Dictionary<string, long>>(actualJson);
 

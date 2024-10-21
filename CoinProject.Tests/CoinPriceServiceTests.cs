@@ -124,7 +124,7 @@ public class CoinPriceServiceTests
         // Assert
         Assert.NotNull(prices);
         Assert.Equal(2, prices.Count);
-        Assert.Equal(0m, prices["BTC"]); // Default value
+        Assert.Equal(0m, prices["BTC"]);
         Assert.Equal(2000.00m, prices["ETH"]);
 
         _loggerMock.Verify(
