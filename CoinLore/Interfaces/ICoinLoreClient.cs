@@ -1,6 +1,6 @@
 ﻿namespace CoinLore.Interfaces;
 
-using Models.CoinLore;
+using CoinLore.Models;
 
 public interface ICoinLoreClient
 {

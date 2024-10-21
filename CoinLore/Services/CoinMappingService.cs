@@ -4,7 +4,7 @@ using Configurations;
 using Exceptions;
 using Interfaces;
 using Microsoft.Extensions.Options;
-using Models.CoinLore;
+using Models;
 
 public class CoinMappingService : ICoinMappingService
 {

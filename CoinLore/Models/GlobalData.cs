@@ -1,4 +1,4 @@
-﻿namespace CoinLore.Models.CoinLore;
+﻿namespace CoinLore.Models;
 
 using System.Text.Json.Serialization;
 

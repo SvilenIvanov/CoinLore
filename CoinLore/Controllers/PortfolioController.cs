@@ -15,7 +15,7 @@ public class PortfolioController : ControllerBase
     }
 
     /// <summary>
-    /// Uploads a portfolio file.
+    /// Uploads a portfolio file. Saves it in memory.
     /// </summary>
     /// <param name="file">The portfolio file to upload.</param>
     /// <returns>A confirmation message.</returns>
@@ -28,6 +28,11 @@ public class PortfolioController : ControllerBase
         return Ok(new { Message = "Portfolio uploaded successfully." });
     }
 
+
+    /// <summary>
+    /// Fetches information about the portfolio profile.
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("summary")]
     public async Task<IActionResult> GetPortfolioSummary()
     {

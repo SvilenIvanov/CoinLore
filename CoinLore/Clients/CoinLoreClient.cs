@@ -1,9 +1,9 @@
 ﻿namespace CoinLore.Clients;
 
+using CoinLore.Models;
 using Configurations;
 using Interfaces;
 using Microsoft.Extensions.Options;
-using Models.CoinLore;
 
 public class CoinLoreClient : BaseHttpClient, ICoinLoreClient
 {

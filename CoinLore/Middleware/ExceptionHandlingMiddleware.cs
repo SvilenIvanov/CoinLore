@@ -1,7 +1,6 @@
 ﻿namespace CoinLore.Middleware;
 
 using Exceptions;
-using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
@@ -42,25 +41,6 @@ public class ExceptionHandlingMiddleware
             {
                 problemDetails.Detail = ex.StackTrace;
             }
-
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, options));
-        }
-        catch (ValidationException vex)
-        {
-            _logger.LogWarning(vex, "Validation failed.");
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            context.Response.ContentType = "application/problem+json";
-
-            var problemDetails = new ValidationProblemDetails(vex.Errors.ToDictionary(
-                e => e.PropertyName,
-                e => new[] { e.ErrorMessage }
-            ))
-            {
-                Status = (int)HttpStatusCode.BadRequest,
-                Title = "One or more validation errors occurred.",
-                Instance = context.Request.Path
-            };
 
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails, options));

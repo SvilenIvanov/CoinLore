@@ -1,7 +1,7 @@
 ﻿namespace CoinLore.Services;
 
-using CoinLore.Models.CoinLore;
 using Interfaces;
+using Models;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;

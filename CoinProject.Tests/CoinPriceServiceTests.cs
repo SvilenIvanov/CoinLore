@@ -1,7 +1,7 @@
 ﻿namespace CoinLoreTests;
 
 using CoinLore.Interfaces;
-using CoinLore.Models.CoinLore;
+using CoinLore.Models;
 using CoinLore.Services;
 using Microsoft.Extensions.Logging;
 using Moq;

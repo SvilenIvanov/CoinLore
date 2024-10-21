@@ -3,7 +3,7 @@ namespace CoinLoreTests;
 using CoinLore.Configurations;
 using CoinLore.Exceptions;
 using CoinLore.Interfaces;
-using CoinLore.Models.CoinLore;
+using CoinLore.Models;
 using CoinLore.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -1,6 +1,7 @@
-﻿using CoinLore.Models;
+﻿namespace CoinLore.Interfaces;
 
-namespace CoinLore.Interfaces;
+using Models;
+
 public interface IPortfolioRepository
 {
     List<string> GetAllSymbols();

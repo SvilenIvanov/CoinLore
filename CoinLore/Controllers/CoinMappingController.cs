@@ -15,9 +15,9 @@ public class CoinMappingController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a mapping between cryptocurrency coin and id from the coinlore api.
+    /// Creates a mapping between cryptocurrency coin and id from the CoinLore API.
     /// Saves it in the Mapping directory.
-    /// The mapping is used for the Portfolio endpoints
+    /// The mapping is used for the Portfolio endpoints.
     /// </summary>
     /// <returns></returns>
     [HttpPost("update")]
