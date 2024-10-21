@@ -3,13 +3,16 @@
 using Configurations;
 using Interfaces;
 using Microsoft.Extensions.Options;
+using System.Collections.Generic;
 using System.Text.Json;
 
 public class SymbolToIdMappingService : ISymbolToIdMappingService
 {
     private readonly string _symbolToIdMapFilePath;
     private readonly ILogger<SymbolToIdMappingService> _logger;
-    private readonly Lazy<Task<Dictionary<string, long>>> _lazyMap;
+    private Dictionary<string, long> _symbolToIdMap;
+
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public SymbolToIdMappingService(
         IOptions<MappingConfig> mappingConfigOptions,
@@ -17,28 +20,36 @@ public class SymbolToIdMappingService : ISymbolToIdMappingService
     {
         _symbolToIdMapFilePath = mappingConfigOptions.Value.SymbolToIdMapFilePath;
         _logger = logger;
-
-        _lazyMap = new Lazy<Task<Dictionary<string, long>>>(LoadMappingAsync, true);
     }
 
-    private async Task<Dictionary<string, long>> LoadMappingAsync()
+    public async Task<Dictionary<string, long>> GetSymbolToIdMapAsync()
     {
-        if (File.Exists(_symbolToIdMapFilePath))
-        {
-            var json = await File.ReadAllTextAsync(_symbolToIdMapFilePath);
-            var mapping = JsonSerializer.Deserialize<Dictionary<string, long>>(json);
-            _logger.LogInformation("Symbol to ID mapping loaded successfully.");
-            return mapping;
-        }
-        else
-        {
-            _logger.LogError("Symbol to ID mapping file not found at {FilePath}.", _symbolToIdMapFilePath);
-            throw new FileNotFoundException("Symbol to ID mapping file not found.", _symbolToIdMapFilePath);
-        }
-    }
+        if (_symbolToIdMap != null && _symbolToIdMap.Count != 0)
+            return _symbolToIdMap;
 
-    public Task<Dictionary<string, long>> GetSymbolToIdMapAsync()
-    {
-        return _lazyMap.Value;
+        await _lock.WaitAsync();
+        try
+        {
+            if (_symbolToIdMap != null && _symbolToIdMap.Count != 0)
+                return _symbolToIdMap;
+
+            if (File.Exists(_symbolToIdMapFilePath))
+            {
+                var json = await File.ReadAllTextAsync(_symbolToIdMapFilePath);
+                _symbolToIdMap = JsonSerializer.Deserialize<Dictionary<string, long>>(json);
+                _logger.LogInformation("Symbol to ID mapping loaded successfully.");
+            }
+            else
+            {
+                _logger.LogWarning("Symbol to ID mapping file not found at {FilePath}.", _symbolToIdMapFilePath);
+                _symbolToIdMap = [];
+            }
+
+            return _symbolToIdMap ?? [];
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 }

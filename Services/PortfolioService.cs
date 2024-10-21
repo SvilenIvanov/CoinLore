@@ -30,6 +30,9 @@ public class PortfolioService : IPortfolioService
 
         var symbolToIdMap = await _mappingService.GetSymbolToIdMapAsync();
 
+        if (symbolToIdMap == null || symbolToIdMap.Count == 0)
+            throw new HttpStatusCodeException(400, "No loaded symbols are found!");
+
         var items = new List<PortfolioItem>();
 
         using var stream = file.OpenReadStream();

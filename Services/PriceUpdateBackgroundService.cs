@@ -12,13 +12,13 @@ public class PriceUpdateBackgroundService : BackgroundService
 
     public PriceUpdateBackgroundService(
         IServiceProvider serviceProvider,
-        IOptions<PortfolioConfig> options,
+        IOptions<PortfolioConfig> portfolioConfig,
         ILogger<PriceUpdateBackgroundService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
 
-        var config = options.Value;
+        var config = portfolioConfig.Value;
         _updateInterval = TimeSpan.FromSeconds(20); // TimeSpan.FromMinutes(config.PriceUpdateIntervalInMinutes);
     }
 
@@ -48,9 +48,7 @@ public class PriceUpdateBackgroundService : BackgroundService
         _logger.LogInformation("PriceUpdateBackgroundService is stopping.");
     }
 
-    private async Task UpdatePricesAsync(
-        ICoinPriceService coinPriceService,
-        IPortfolioRepository portfolioRepository)
+    private async Task UpdatePricesAsync(ICoinPriceService coinPriceService, IPortfolioRepository portfolioRepository)
     {
         var symbols = portfolioRepository.GetAllSymbols();
 

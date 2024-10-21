@@ -25,14 +25,6 @@ public class CoinLoreClient : BaseHttpClient, ICoinLoreClient
         return response.Count > 0 ? response[0] : null;
     }
 
-    public async Task<List<CoinTicker>> GetTopTickersAsync()
-    {
-        var endpoint = _config.Endpoints.Tickers;
-        var response = await GetAsync<CoinTickerResponse>(endpoint);
-
-        return response.Data;
-    }
-
     public async Task<List<CoinTicker>> GetTickersByIdsAsync(IEnumerable<string> ids)
     {
         var idString = string.Join(",", ids);
