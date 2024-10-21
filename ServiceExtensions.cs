@@ -12,6 +12,7 @@ public static class ServiceExtensions
     {
         services.Configure<CoinLoreConfig>(configuration.GetSection(nameof(CoinLoreConfig)));
         services.Configure<MappingConfig>(configuration.GetSection(nameof(MappingConfig)));
+        services.Configure<PortfolioConfig>(configuration.GetSection(nameof(PortfolioConfig)));
     }
 
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
@@ -27,6 +28,8 @@ public static class ServiceExtensions
         {
             client.BaseAddress = new Uri(configuration["CoinLoreConfig:BaseUrl"]);
         });
+
+        services.AddHostedService<PriceUpdateBackgroundService>();
     }
 
     public static void AddSwaggerDocumentation(this IServiceCollection services)

@@ -22,8 +22,8 @@ public class Program
         ServiceExtensions.RegisterServices(builder.Services, builder.Configuration);
 
         builder.Services.AddControllers();
-
         builder.Services.AddEndpointsApiExplorer();
+
         ServiceExtensions.AddSwaggerDocumentation(builder.Services);
 
         var app = builder.Build();
