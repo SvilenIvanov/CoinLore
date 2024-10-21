@@ -28,32 +28,17 @@ public class PortfolioService : IPortfolioService
 
     public async Task UploadPortfolioAsync(IFormFile file)
     {
-        if (file == null || file.Length == 0)
-            throw new HttpStatusCodeException(400, "Invalid file.");
+        ValidateFile(file);
 
-        var symbolToIdMap = await _mappingService.GetSymbolToIdMapAsync();
+        var symbolToIdMap = await RetrieveSymbolToIdMapAsync();
+        var items = await ParseAndValidatePortfolioAsync(file.OpenReadStream(), symbolToIdMap);
 
-        if (symbolToIdMap == null || symbolToIdMap.Count == 0)
-            throw new HttpStatusCodeException(400, "No loaded symbols are found!");
-
-        using var stream = file.OpenReadStream();
-
-        var items = await ParsePortfolioFileAsync(stream, symbolToIdMap);
-
-        if (items.Count == 0)
-            throw new HttpStatusCodeException(400, "No valid portfolio items found in the uploaded file.");
-
-        await _portfolioRepository.UploadPortfolioAsync(items);
-        _logger.LogInformation("Portfolio uploaded and parsed successfully.");
-
-        await _priceUpdateService.UpdatePricesAsync();
-        _logger.LogInformation("Prices updated immediately after portfolio upload.");
+        await UploadAndUpdatePricesAsync(items);
     }
 
     public async Task<PortfolioSummary> GetPortfolioSummaryAsync()
     {
         var items = await _portfolioRepository.GetPortfolioItemsAsync();
-
         if (items == null || items.Count == 0)
             throw new HttpStatusCodeException(400, "Portfolio is empty. Please upload a portfolio file.");
 
@@ -64,7 +49,6 @@ public class PortfolioService : IPortfolioService
         foreach (var item in items)
         {
             var currentPrice = _portfolioRepository.GetCurrentPrice(item.Coin);
-
             var coinChange = new CoinChange
             {
                 Coin = item.Coin,
@@ -72,31 +56,61 @@ public class PortfolioService : IPortfolioService
                 InitialPrice = item.InitialPrice,
                 CurrentPrice = currentPrice
             };
-
             coinChanges.Add(coinChange);
-
             initialValue += coinChange.InitialValue;
             currentValue += coinChange.CurrentValue;
         }
 
         var overallChangePercentage = initialValue == 0 ? 0 : ((currentValue - initialValue) / initialValue) * 100;
 
-        var summary = new PortfolioSummary
+        return new PortfolioSummary
         {
             InitialValue = initialValue,
             CurrentValue = currentValue,
             OverallChangePercentage = overallChangePercentage,
             CoinChanges = coinChanges
         };
+    }
 
-        return summary;
+    private void ValidateFile(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            throw new ArgumentException("Invalid file.");
+    }
+
+    private async Task<Dictionary<string, long>> RetrieveSymbolToIdMapAsync()
+    {
+        var symbolToIdMap = await _mappingService.GetSymbolToIdMapAsync();
+        if (symbolToIdMap == null || symbolToIdMap.Count == 0)
+            throw new InvalidOperationException("No loaded symbols are found!");
+
+        return symbolToIdMap;
+    }
+
+    private async Task<List<PortfolioItem>> ParseAndValidatePortfolioAsync(Stream fileStream, Dictionary<string, long> symbolToIdMap)
+    {
+        var items = await ParsePortfolioFileAsync(fileStream, symbolToIdMap);
+        if (items.Count == 0)
+        {
+            _logger.LogWarning("No valid portfolio items were parsed from the uploaded file.");
+            throw new InvalidOperationException("No valid portfolio items found in the uploaded file.");
+        }
+        return items;
+    }
+
+    private async Task UploadAndUpdatePricesAsync(List<PortfolioItem> items)
+    {
+        await _portfolioRepository.UploadPortfolioAsync(items);
+        _logger.LogInformation("Portfolio uploaded and parsed successfully.");
+
+        await _priceUpdateService.UpdatePricesAsync();
+        _logger.LogInformation("Prices updated immediately after portfolio upload.");
     }
 
     private async Task<List<PortfolioItem>> ParsePortfolioFileAsync(Stream fileStream, Dictionary<string, long> symbolToIdMap)
     {
         var items = new List<PortfolioItem>();
         using var reader = new StreamReader(fileStream);
-
         string line;
         var lineNumber = 0;
 
@@ -130,6 +144,18 @@ public class PortfolioService : IPortfolioService
             if (!symbolToIdMap.TryGetValue(coin, out var id))
             {
                 _logger.LogWarning("Coin symbol {Coin} not found in mapping at line {LineNumber}. Skipping.", coin, lineNumber);
+                continue;
+            }
+
+            if (quantity <= 0)
+            {
+                _logger.LogWarning($"Non-positive quantity at line {lineNumber}: {quantity}");
+                continue;
+            }
+
+            if (initialPrice < 0)
+            {
+                _logger.LogWarning($"Negative initial price at line {lineNumber}: {initialPrice}");
                 continue;
             }
 
