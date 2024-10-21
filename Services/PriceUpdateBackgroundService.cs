@@ -17,7 +17,7 @@ public class PriceUpdateBackgroundService : BackgroundService
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _updateInterval = TimeSpan.FromMinutes(options.Value.PriceUpdateIntervalInMinutes);
+        _updateInterval = TimeSpan.FromSeconds(20); //TimeSpan.FromMinutes(options.Value.PriceUpdateIntervalInMinutes);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

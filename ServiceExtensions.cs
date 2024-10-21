@@ -8,7 +8,7 @@ using System.Reflection;
 
 public static class ServiceExtensions
 {
-    public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    public static void AddConfigurations(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<CoinLoreConfig>(configuration.GetSection(nameof(CoinLoreConfig)));
         services.Configure<MappingConfig>(configuration.GetSection(nameof(MappingConfig)));
@@ -20,6 +20,7 @@ public static class ServiceExtensions
         services.AddScoped<ICoinPriceService, CoinPriceService>();
         services.AddScoped<ICoinMappingService, CoinMappingService>();
         services.AddScoped<IPortfolioService, PortfolioService>();
+        services.AddScoped<IPriceUpdateService, PriceUpdateService>();
 
         services.AddSingleton<IPortfolioRepository, InMemoryPortfolioRepository>();
         services.AddSingleton<ISymbolToIdMappingService, SymbolToIdMappingService>();

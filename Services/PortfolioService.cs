@@ -11,16 +11,19 @@ public class PortfolioService : IPortfolioService
 {
     private readonly IPortfolioRepository _portfolioRepository;
     private readonly ISymbolToIdMappingService _mappingService;
+    private readonly IPriceUpdateService _priceUpdateService;
     private readonly ILogger<PortfolioService> _logger;
 
     public PortfolioService(
         IPortfolioRepository portfolioRepository,
         ILogger<PortfolioService> logger,
-        ISymbolToIdMappingService mappingService)
+        ISymbolToIdMappingService mappingService,
+        IPriceUpdateService priceUpdateService)
     {
         _portfolioRepository = portfolioRepository;
         _logger = logger;
         _mappingService = mappingService;
+        _priceUpdateService = priceUpdateService;
     }
 
     public async Task UploadPortfolioAsync(IFormFile file)
@@ -33,57 +36,18 @@ public class PortfolioService : IPortfolioService
         if (symbolToIdMap == null || symbolToIdMap.Count == 0)
             throw new HttpStatusCodeException(400, "No loaded symbols are found!");
 
-        var items = new List<PortfolioItem>();
-
         using var stream = file.OpenReadStream();
-        using var reader = new StreamReader(stream);
 
-        string line;
-        var lineNumber = 0;
-        while ((line = await reader.ReadLineAsync()) != null)
-        {
-            lineNumber++;
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+        var items = await ParsePortfolioFileAsync(stream, symbolToIdMap);
 
-            var parts = line.Split('|');
-            if (parts.Length != 3)
-            {
-                _logger.LogWarning($"Invalid line format at line {lineNumber}: {line}");
-                continue;
-            }
-
-            if (!decimal.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var quantity))
-            {
-                _logger.LogWarning($"Invalid quantity at line {lineNumber}: {line}");
-                continue;
-            }
-
-            var coin = parts[1].Trim().ToUpperInvariant();
-
-            if (!decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var initialPrice))
-            {
-                _logger.LogWarning($"Invalid initial price at line {lineNumber}: {parts[2]}");
-                continue;
-            }
-
-            if (!symbolToIdMap.TryGetValue(coin, out var id))
-            {
-                _logger.LogWarning("Coin symbol {Coin} not found in mapping at line {LineNumber}. Skipping.", coin, lineNumber);
-                continue;
-            }
-
-            items.Add(new PortfolioItem
-            {
-                Id = id,
-                Quantity = quantity,
-                Coin = coin,
-                InitialPrice = initialPrice
-            });
-        }
+        if (items.Count == 0)
+            throw new HttpStatusCodeException(400, "No valid portfolio items found in the uploaded file.");
 
         await _portfolioRepository.UploadPortfolioAsync(items);
         _logger.LogInformation("Portfolio uploaded and parsed successfully.");
+
+        await _priceUpdateService.UpdatePricesAsync();
+        _logger.LogInformation("Prices updated immediately after portfolio upload.");
     }
 
     public async Task<PortfolioSummary> GetPortfolioSummaryAsync()
@@ -126,5 +90,58 @@ public class PortfolioService : IPortfolioService
         };
 
         return summary;
+    }
+
+    private async Task<List<PortfolioItem>> ParsePortfolioFileAsync(Stream fileStream, Dictionary<string, long> symbolToIdMap)
+    {
+        var items = new List<PortfolioItem>();
+        using var reader = new StreamReader(fileStream);
+
+        string line;
+        var lineNumber = 0;
+
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            lineNumber++;
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            var parts = line.Split('|');
+            if (parts.Length != 3)
+            {
+                _logger.LogWarning($"Invalid line format at line {lineNumber}: {line}");
+                continue;
+            }
+
+            if (!decimal.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var quantity))
+            {
+                _logger.LogWarning($"Invalid quantity at line {lineNumber}: {parts[0]}");
+                continue;
+            }
+
+            var coin = parts[1].Trim().ToUpperInvariant();
+
+            if (!decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var initialPrice))
+            {
+                _logger.LogWarning($"Invalid initial price at line {lineNumber}: {parts[2]}");
+                continue;
+            }
+
+            if (!symbolToIdMap.TryGetValue(coin, out var id))
+            {
+                _logger.LogWarning("Coin symbol {Coin} not found in mapping at line {LineNumber}. Skipping.", coin, lineNumber);
+                continue;
+            }
+
+            items.Add(new PortfolioItem
+            {
+                Id = id,
+                Quantity = quantity,
+                Coin = coin,
+                InitialPrice = initialPrice
+            });
+        }
+
+        return items;
     }
 }

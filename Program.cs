@@ -18,7 +18,7 @@ public class Program
                 .Enrich.FromLogContext()
         );
 
-        ServiceExtensions.ConfigureServices(builder.Services, builder.Configuration);
+        ServiceExtensions.AddConfigurations(builder.Services, builder.Configuration);
         ServiceExtensions.RegisterServices(builder.Services, builder.Configuration);
 
         builder.Services.AddControllers();
