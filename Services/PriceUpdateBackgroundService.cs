@@ -6,23 +6,20 @@ using Microsoft.Extensions.Options;
 
 public class PriceUpdateBackgroundService : BackgroundService
 {
-    private readonly ICoinPriceService _coinPriceService;
-    private readonly IPortfolioRepository _portfolioRepository;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<PriceUpdateBackgroundService> _logger;
     private readonly TimeSpan _updateInterval;
 
     public PriceUpdateBackgroundService(
-        ICoinPriceService coinPriceService,
-        IPortfolioRepository portfolioRepository,
-        IOptions<PortfolioConfig> portfolioConfig,
+        IServiceProvider serviceProvider,
+        IOptions<PortfolioConfig> options,
         ILogger<PriceUpdateBackgroundService> logger)
     {
-        _coinPriceService = coinPriceService;
-        _portfolioRepository = portfolioRepository;
+        _serviceProvider = serviceProvider;
         _logger = logger;
 
-        var config = portfolioConfig.Value;
-        _updateInterval = TimeSpan.FromMinutes(config.PriceUpdateIntervalInMinutes);
+        var config = options.Value;
+        _updateInterval = TimeSpan.FromSeconds(20); // TimeSpan.FromMinutes(config.PriceUpdateIntervalInMinutes);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,7 +30,12 @@ public class PriceUpdateBackgroundService : BackgroundService
         {
             try
             {
-                await UpdatePricesAsync();
+                using var scope = _serviceProvider.CreateScope();
+
+                var coinPriceService = scope.ServiceProvider.GetRequiredService<ICoinPriceService>();
+                var portfolioRepository = scope.ServiceProvider.GetRequiredService<IPortfolioRepository>();
+
+                await UpdatePricesAsync(coinPriceService, portfolioRepository);
             }
             catch (Exception ex)
             {
@@ -46,9 +48,11 @@ public class PriceUpdateBackgroundService : BackgroundService
         _logger.LogInformation("PriceUpdateBackgroundService is stopping.");
     }
 
-    private async Task UpdatePricesAsync()
+    private async Task UpdatePricesAsync(
+        ICoinPriceService coinPriceService,
+        IPortfolioRepository portfolioRepository)
     {
-        var symbols = _portfolioRepository.GetAllSymbols();
+        var symbols = portfolioRepository.GetAllSymbols();
 
         if (symbols.Count == 0)
         {
@@ -56,18 +60,18 @@ public class PriceUpdateBackgroundService : BackgroundService
             return;
         }
 
-        var prices = await _coinPriceService.GetCurrentPricesAsync(symbols);
+        var prices = await coinPriceService.GetCurrentPricesAsync(symbols);
 
         foreach (var symbol in symbols)
         {
             if (prices.TryGetValue(symbol, out var price))
             {
-                _portfolioRepository.UpdateCurrentPrice(symbol, price);
+                portfolioRepository.UpdateCurrentPrice(symbol, price);
             }
             else
             {
                 _logger.LogWarning("Price not found for symbol {Symbol}", symbol);
-                _portfolioRepository.UpdateCurrentPrice(symbol, 0);
+                portfolioRepository.UpdateCurrentPrice(symbol, 0);
             }
         }
 
