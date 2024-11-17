@@ -55,7 +55,7 @@ public class CoinMappingService : ICoinMappingService
         }
 
         int numberOfCalls = (int)Math.Ceiling((double)coinsCount / _limit);
-        _logger.LogInformation($"Number of API calls required: {numberOfCalls}");
+        _logger.LogInformation("Number of API calls required: {NumberOfCalls}", numberOfCalls);
 
         var tasks = Enumerable.Range(0, numberOfCalls)
             .Select(i => FetchCoinsAsync(i * _limit, _limit))
@@ -76,7 +76,7 @@ public class CoinMappingService : ICoinMappingService
                         return id;
                     else
                     {
-                        _logger.LogWarning($"Invalid ID format for symbol {g.Key}: {g.First().Id}");
+                        _logger.LogWarning("Invalid ID format for symbol {Key}: {Value}", g.Key, g.First().Id);
                         return 0L;
                     }
                 });
@@ -89,11 +89,11 @@ public class CoinMappingService : ICoinMappingService
         var coins = await _coinLoreClient.GetTickersByPaginationAsync(start, limit);
         if (coins == null || coins.Count == 0)
         {
-            _logger.LogWarning($"No coins retrieved for start={start}");
+            _logger.LogWarning("No coins retrieved for start={Start}", start);
             return new List<CoinTicker>();
         }
 
-        _logger.LogInformation($"Fetched coins from {start} to {start + limit - 1}");
+        _logger.LogInformation("Fetched coins from {Start} to {Limit}", start, start + limit - 1);
         return coins;
     }
 

@@ -18,7 +18,8 @@ public abstract class BaseHttpClient
     {
         try
         {
-            _logger.LogInformation($"Sending GET request to {requestUri}");
+            _logger.LogInformation("Sending GET request to {RequestUri}", requestUri);
+
             var response = await _httpClient.GetAsync(requestUri);
 
             response.EnsureSuccessStatusCode();
@@ -35,12 +36,12 @@ public abstract class BaseHttpClient
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, $"Request to {requestUri} failed.");
+            _logger.LogError(ex, "Request to {RequestUri} failed.", requestUri);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"An error occurred while processing the response from {requestUri}.");
+            _logger.LogError(ex, "An error occurred while processing the response from {RequestUri}.", requestUri);
             throw;
         }
     }
